@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Portafolio académico de Física: proyectos, simulación numérica y dinámica de fluidos computacional.">
+  <meta name="theme-color" content="#F2F5F7">
+  <title>Portafolio de Física | Brandon Mendoza</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<style>
+/* Layout: columna única alineada a la izquierda; el campo de flujo (CFD) es el único gesto fuerte, el resto es sobrio. */
+:root {
+  --bg: #F2F5F7;
+  --surface: #FFFFFF;
+  --fg: #0F1D26;
+  --muted: #55687A;
+  --line: #D3DCE3;
+  --accent: #0A6C9A;
+  --flow: #1B87B8;
+  --ok: #1F7A4D;
+  --warn: #A86400;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A1319; --surface: #111E27; --fg: #E6EEF3; --muted: #8DA3B3; --line: #223441;
+    --accent: #5FC6F0; --flow: #5FC6F0; --ok: #5FCB93; --warn: #E0A44A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A1319; --surface: #111E27; --fg: #E6EEF3; --muted: #8DA3B3; --line: #223441;
+  --accent: #5FC6F0; --flow: #5FC6F0; --ok: #5FCB93; --warn: #E0A44A; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.12; }
+p { margin: 0; }
+
+.wrap {
+  max-width: 68rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow {
+  font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* Barra superior */
+.top { padding-block: 20px; }
+.top .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: baseline; justify-content: space-between; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+.top nav { display: flex; gap: 22px; font-size: 0.95rem; }
+.top nav a { color: var(--muted); text-decoration: none; }
+.top nav a:hover { color: var(--fg); }
+
+/* Presentación */
+.hero { padding-block: 36px 24px; }
+.hero h1 { font-size: clamp(2.2rem, 6.4vw, 4.2rem); font-weight: 700; max-width: 16ch; margin-top: 14px; }
+.hero .lead { max-width: 52ch; color: var(--muted); font-size: 1.1rem; margin-top: 18px; }
+
+.figure { margin-top: 36px; }
+.field {
+  position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 28px 28px; background-position: -1px -1px;
+  aspect-ratio: 5 / 2; max-width: 100%;
+}
+.field canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.figure figcaption {
+  display: flex; flex-wrap: wrap; gap: 6px 24px; margin-top: 12px;
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
+}
+.figure figcaption span { min-width: 0; overflow-wrap: anywhere; }
+
+/* Secciones */
+section { padding-block: 56px 8px; }
+.sec-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: end; justify-content: space-between; margin-bottom: 22px; }
+.sec-head h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 650; }
+.note { font-size: 0.9rem; color: var(--muted); max-width: 46ch; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.chip {
+  font: inherit; font-size: 0.88rem; cursor: pointer;
+  background: transparent; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+}
+.chip:hover { border-color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 16px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0;
+}
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: space-between; align-items: center; }
+.card h3 { font-size: 1.2rem; font-weight: 650; }
+.card p { color: var(--muted); font-size: 0.95rem; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 0.82rem; font-weight: 500; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.status.ok { color: var(--ok); }
+.status.warn { color: var(--warn); }
+.status.idle { color: var(--muted); }
+.status.idle::before { background: transparent; border: 1.5px solid currentColor; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+.tag { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; }
+.sample { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* Medios y detalle de proyecto */
+.card .media { margin: -20px -20px 0; border-bottom: 1px solid var(--line); background: var(--bg); border-radius: 10px 10px 0 0; overflow: hidden; }
+.card .media img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.card .media video { display: block; width: 100%; height: auto; max-height: 340px; }
+.card.open { grid-column: 1 / -1; }
+details.more { border-top: 1px solid var(--line); padding-top: 12px; }
+details.more summary { cursor: pointer; color: var(--accent); font-size: 0.92rem; font-weight: 500; }
+.detail { display: grid; gap: 16px; margin-top: 14px; }
+.bloque h4 { margin: 0 0 4px; font-family: var(--font-mono); font-size: 0.76rem; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.bloque p { color: var(--fg); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); gap: 12px; }
+.gallery figure { margin: 0; min-width: 0; }
+.gallery img, .gallery video { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
+.gallery figcaption { margin-top: 6px; font-size: 0.82rem; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.92rem; }
+
+/* Sobre mí y contacto */
+.about { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; }
+.about p { max-width: 62ch; font-size: 1.05rem; }
+dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-size: 0.95rem; align-content: start; }
+dt { color: var(--muted); font-family: var(--font-mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+dd { margin: 0; }
+.contact { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.mail {
+  font-family: var(--font-mono); font-size: 0.95rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; user-select: all; overflow-wrap: anywhere;
+}
+.btn {
+  font: inherit; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+  background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 9px 16px;
+}
+.btn:hover { filter: brightness(1.08); }
+footer { padding-block: 56px 40px; color: var(--muted); font-size: 0.85rem; }
+
+@media (max-width: 720px) {
+  .about { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-top: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <span class="brand">Brandon Mendoza</span>
+    <nav aria-label="Secciones">
+      <a href="#proyectos">Proyectos</a>
+      <a href="#sobre-mi">Sobre mí</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <p class="eyebrow">Física · Facultad de Ciencias, UNAM · 5.º semestre</p>
+    <h1>Física con simulación numérica</h1>
+    <p class="lead">Aquí reúno los proyectos de mi carrera. Me enfoco en el análisis de dinámica de fluidos computacional (CFD) para aplicaciones automotrices y aeroespaciales.</p>
+
+    <figure class="figure">
+      <div class="field" aria-hidden="true">
+        <canvas id="cyl"></canvas>
+        <canvas id="flow"></canvas>
+      </div>
+      <figcaption>
+        <span>Flujo potencial alrededor de un cilindro de radio a, U∞ = 1</span>
+        <span>u = U∞ (1 − a²(x² − y²) / r⁴)</span>
+        <span>v = −2 U∞ a² x y / r⁴</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <section id="proyectos">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Proyectos</h2>
+        <p class="note">Se actualiza conforme avanzan mis cursos y mi certificación.</p>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filtrar por área"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section id="sobre-mi">
+    <div class="wrap">
+      <div class="sec-head"><h2>Sobre mí</h2></div>
+      <div class="about">
+        <p>Soy Brandon Mendoza, estudiante de Física en la Facultad de Ciencias de la UNAM, en quinto semestre. Me interesa el análisis CFD aplicado a la industria automotriz y aeroespacial: resolver numéricamente las ecuaciones de Navier–Stokes y entender qué muestran los resultados, desde la malla y las condiciones de frontera hasta la convergencia y el campo de velocidades y presión.</p>
+        <dl>
+          <dt>Carrera</dt><dd>Física, Facultad de Ciencias, UNAM</dd>
+          <dt>Semestre</dt><dd>5.º</dd>
+          <dt>Interés</dt><dd>CFD automotriz y aeroespacial</dd>
+          <dt>Software</dt><dd>ANSYS (en curso)</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto">
+    <div class="wrap">
+      <div class="sec-head"><h2>Contacto</h2></div>
+      <div class="contact">
+        <span class="mail" id="mail">brandondonovan099@gmail.com</span>
+        <button class="btn" id="copy" type="button">Copiar correo</button>
+        <span class="note" id="copied" role="status"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Portafolio de Brandon Mendoza · Física, UNAM</div>
+</footer>
+  <script src="js/main.js"></script>
+</body>
+</html>
