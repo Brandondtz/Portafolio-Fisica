@@ -8,9 +8,15 @@
      enlaces: [{ texto: "Informe", url: "https://..." }] }
 */
 var PROYECTOS = [
-  { titulo: "Curso y certificación de ANSYS", area: "CFD", semestre: "5.º", estado: "En curso",
+  {
+    titulo: "Curso y certificación de ANSYS",
+    area: "CFD",
+    semestre: "5.º",
+    estado: "En curso",
     resumen: "Ejercicios del curso de ANSYS. Aquí iré subiendo mis simulaciones, con su geometría, mallado, condiciones de frontera y resultados.",
-    herramientas: ["ANSYS"] }
+    herramientas: ["ANSYS"],
+    url: "proyectos/ansys.html"
+  }
 ];
 
 var chips = document.getElementById("chips");
@@ -109,7 +115,12 @@ function pintarTarjetas() {
     p.herramientas.forEach(function (h) { tags.appendChild(el("span", "tag", h)); });
     c.appendChild(tags);
     var det = detalle(p, c);
-    if (det) c.appendChild(det);
+if (det) c.appendChild(det);
+
+var enlace = el("a", "project-link", "Ver proyecto →");
+enlace.href = p.url || "#";
+c.appendChild(enlace);
+
     grid.appendChild(c);
   });
 }
@@ -141,16 +152,51 @@ document.getElementById("copy").addEventListener("click", function () {
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var W = 0, H = 0, S = 1, dpr = 1, color = "#1B87B8";
   var HALF_H = 1.6, N = 150, parts = [], frame = 0;
-
+  // Obstáculo móvil controlado por el puntero
+    var obstacle = {
+    x: 0, y: 0,
+    targetX: 0, targetY: 0,
+    active: false,
+    strength: 0,
+    radius: 0.22
+  };
+  
   function vars() {
     var cs = getComputedStyle(document.documentElement);
     color = cs.getPropertyValue("--flow").trim() || color;
     return cs;
   }
-  function vel(x, y) {
-    var r2 = x * x + y * y, r4 = r2 * r2;
-    return [1 - (x * x - y * y) / r4, -2 * x * y / r4];
+    function vel(x, y) {
+    // Campo original alrededor del cilindro fijo
+    var r2 = x * x + y * y;
+    r2 = Math.max(r2, 0.0001);
+
+    var r4 = r2 * r2;
+
+    var u = 1 - (x * x - y * y) / r4;
+    var v = -2 * x * y / r4;
+
+    // Perturbación producida por el obstáculo móvil
+       // Perturbación gradual del obstáculo móvil
+    if (obstacle.strength > 0.001) {
+      var dx = x - obstacle.x;
+      var dy = y - obstacle.y;
+
+      var d2 = dx * dx + dy * dy;
+      var minD2 = obstacle.radius * obstacle.radius;
+
+      d2 = Math.max(d2, minD2);
+
+      var d4 = d2 * d2;
+      var intensity = obstacle.radius * obstacle.radius * obstacle.strength;
+
+      u -= intensity * (dx * dx - dy * dy) / d4;
+      v -= intensity * (2 * dx * dy) / d4;
+    }
+
+    return [u, v];
   }
+  
   function spawn(p, anywhere) {
     p.x = anywhere ? (Math.random() * 8 - 4) : -4.1;
     p.y = (Math.random() * 2 - 1) * HALF_H;
@@ -159,6 +205,34 @@ document.getElementById("copy").addEventListener("click", function () {
   }
   function toX(x) { return W / 2 + x * S; }
   function toY(y) { return H / 2 - y * S; }
+  function moveObstacle(event) {
+    var rect = cv.getBoundingClientRect();
+
+    var x = (event.clientX - rect.left - W / 2) / S;
+    var y = (H / 2 - (event.clientY - rect.top)) / S;
+
+    var minDistance = 1 + obstacle.radius + 0.12;
+    var distance = Math.sqrt(x * x + y * y);
+
+    // Evitar que el obstáculo se introduzca en el cilindro fijo
+    if (distance < minDistance) {
+      var angle = Math.atan2(y, x);
+      x = Math.cos(angle) * minDistance;
+      y = Math.sin(angle) * minDistance;
+    }
+
+    obstacle.targetX = x;
+    obstacle.targetY = y;
+    obstacle.active = true;
+  }
+
+  function leaveObstacle() {
+    obstacle.active = false;
+  }
+
+  cv.addEventListener("pointermove", moveObstacle);
+  cv.addEventListener("pointerleave", leaveObstacle);
+  cv.addEventListener("pointercancel", leaveObstacle);
 
   function drawCylinder() {
     var cs = vars();
@@ -198,6 +272,13 @@ document.getElementById("copy").addEventListener("click", function () {
     if (reduce) drawStatic();
   }
   function tick() {
+        // Movimiento suave del obstáculo móvil
+    var smooth = 0.12;
+
+    obstacle.x += (obstacle.targetX - obstacle.x) * smooth;
+    obstacle.y += (obstacle.targetY - obstacle.y) * smooth;
+        var targetStrength = obstacle.active ? 1 : 0;
+    obstacle.strength += (targetStrength - obstacle.strength) * 0.08;
     requestAnimationFrame(tick);
     if (document.hidden || !W) return;
     frame++;
